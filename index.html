@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Disability Disparity Index</title>
+
+<link rel="stylesheet" href="https://js.arcgis.com/4.31/esri/themes/light/main.css">
+<script src="https://js.arcgis.com/4.31/"></script>
+
+<style>
+html, body {
+  margin: 0;
+  height: 100%;
+  font-family: system-ui, sans-serif;
+}
+
+#wrap {
+  display: flex;
+  height: 100%;
+}
+
+#panel {
+  width: 350px;
+  padding: 14px;
+  overflow: auto;
+  background: #fafafa;
+  border-right: 1px solid #ddd;
+  box-sizing: border-box;
+}
+
+#view {
+  flex: 1;
+  min-width: 0;
+}
+
+h2 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.hint {
+  font-size: 12px;
+  color: #666;
+  margin: 12px 0;
+  line-height: 1.5;
+}
+
+details {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #333;
+}
+
+summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+details p {
+  margin: 8px 0 0;
+}
+
+details h3 {
+  font-size: 13px;
+  margin: 14px 0 0;
+}
+
+details a {
+  color: #0b5cad;
+}
+
+details ul,
+details ol {
+  padding-left: 18px;
+  margin: 8px 0 0;
+}
+
+details li {
+  margin-bottom: 5px;
+}
+
+.var {
+  padding: 8px 0;
+  border-bottom: 1px solid #e3e3e3;
+}
+
+.name {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.row input[type=range] {
+  flex: 1;
+}
+
+.w {
+  width: 22px;
+  text-align: right;
+  font-weight: 600;
+}
+
+@media (max-width: 650px) {
+  #wrap {
+    flex-direction: column;
+  }
+
+  #panel {
+    width: 100%;
+    height: 45%;
+  }
+
+  #view {
+    height: 55%;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div id="wrap">
+
+  <div id="panel">
+
+    <h2>North Dakota Disability Disparity Index</h2>
+
+    <div class="hint">
+
+      <p>
+       Click on individual census tracts on the map to view their
+       <b>Overall Disparity Score</b>. Adjust the
+       weights assigned to the corresponding measure to explore
+       how each measure compares to other census tracts across North Dakota. 
+      </p>
+      
+    </div>
+
+    <details>
+      <summary>About the Overall Disparity Score</summary>
+
+      <p><b>North Dakota Disability Disparity Index: A GEOG474 Project</b></p>
+      <p>Owen May</p>
+      <p>November 16th, 2026</p>
+
+      <h3>Introduction</h3>
+
+      <p>
+        My initial class project proposal focused on creating a map in ArcGIS that would identify “Which areas of North Dakota contain populations most vulnerable to winter storms?”. After starting to research this question, I realized that the topic was for too broad, as vulnerability to winter storms could be classified in many different ways. Instead, I shifted my project to focus on a subset of data I’ve collected up to that point, specifically census data regarding disability and associated socioeconomic factors across North Dakota. My research question became “What areas of North Dakota face the most relative disabilities and disparities in care?”.
+      </p>
+
+      <h3>Summary of Data Preparation</h3>
+
+      <p>
+        The data I collected regarding disability across North Dakota came from the IPUMS National Historical Geographic Information System. The NHGIS lists offering “free online access to summary statistics and GIS files for U.S. censuses and other nationwide surveys from 1790 through the present”. Specifically, from this system, I choose the 2020–2024 American Community Survey (ACS) 5-Year Estimates for this project. The ACS is created from “pooling 60 consecutive months of continuous survey data collected from January 1, 2020, through December 31, 2024”. Because a census is only conducted every 10 years, using the ACS is the most accurate way to interpret up to date information about disability within North Dakota. From here I downloaded 9 data tables: Types of Health Insurance Coverage by Age, Sex by Age by Veteran Status, Poverty Status in the Past 12 Months, Sex by Age by Cognitive Difficulty, Sex by Age by Ambulatory Difficulty, Sex by Age by Self-Care Difficulty, Sex by Age by Hearing Difficulty, Sex by Age by Vision Difficulty, Sex by Age by Independent Living Difficulty. After pulling this data, I used Excel functions to calculate measured percentages out of each of the data tables total population, normalizing the data.
+      </p>
+
+      <h3>Study Area</h3>
+
+      <p>
+        The study area I chose for this project was the extent of the state of North Dakota, specifically using the division of census tracts. I chose census tracts boundaries as not only do they easily join with the NHGIS data tables, but they provide a clearer picture of disability trends across North Dakota compared to county boundaries. To be frank, I chose just using the extent of North Dakota for this project because I am here at the university, and to limit the amount of data preparation needed, but this project could easily be replicated across the country, anywhere ACS data was surveyed.
+      </p>
+
+      <h3>Methodology</h3>
+
+      <p>This study used a combination of ArcGIS Pro, ArcGIS Online, ArcGIS Location Platform, Claude.ai, Excel and GitHub.</p>
+
+      <ol>
+        <li>First disability and socioeconomic data was pulled from IPUMS NHGIS, as well as a shapefile containing all US census tracts. This shapefile was inputted into ArcGIS pro.</li>
+        <li>Next, I used the select by attributes tool to cut all census fields not containing the STATEFP field equal to 38 (the corresponding code for the state of North Dakota).</li>
+        <li>From here I worked through data preparation for each of the 9 data tables, combining these data tables into one master data table.</li>
+        <li>I inputted this master data table into ArcGIS Pro, and I joined it to the shapefile of census tracts, using GISJOIN as the common key field between features.</li>
+        <li>I exported this feature layer, and hosted it on ArcGIS Online. Then I created a free API Key using the ArcGIS location platform.</li>
+        <li>
+          I used Claude.ai to equate a min-max normalization for each of the data values, and to equate a weighted average for this normalization known as the Overall Disparity Score. The specific equations used are:
+          <p>Normalized Value = (Observed Value − Minimum Value) ÷ (Maximum Value − Minimum Value)</p>
+          <p>Overall Disparity Score = (Sum of [Weight × Normalized Value]) ÷ (Sum of Weights) × 100</p>
+        </li>
+        <li>I used Claude.ai to vibe-code an interactive website and display for the data.</li>
+        <li>I uploaded this HTML code into GitHub, to make the repository publicly available.</li>
+      </ol>
+
+      <h3>Results</h3>
+
+      <p>The specific results and takeaway from this index depends on each unique user interaction, but I noticed a few trends when viewing myself.</p>
+
+      <p>
+        Several rural tracts within the counties of McKenzie, Golden Valley, Sioux and Rolette display high relative disparity scores when all measures exist at an equal weight. Tracts within McKenzie and Golden Valley contain areas largely affected by the Bakken Oil Boom, whereas the Sioux and Rolette tracts are situated near tribal governments.
+      </p>
+
+      <p>
+        The urban tract with the highest relative disparity score is situated just south of Minot between Highway 2 and 52 W, and 37th Ave SW. This tract contains the second highest percent of population with self-care difficulty and the highest percent of population with independent living difficulty across the entire state. This tract simultaneously contains relatively low populations without healthcare and poverty status. This leads to my assumption that the tract contains a high amount of senior assisted living facilities and elderly populations, although more research would need to be done to identify the underlying factor within this tract.
+      </p>
+
+      <p>
+        When adjusting the sliders, I was met with a few more additional takeaways, some expected, and some surprising. I was not shocked to see that tracts adjacent to the Minot and Grand Forks AFB had the highest population percentages containing veterans. I was surprised to see that the tract containing a majority of the University of North Dakota has the highest percent of population below the poverty level. After deliberation this makes sense, due to the lack of income for most college students. Areas around the Bakken and Williston Basin on average appeared to have a higher rate of populations without healthcare coverage. I presume this to be the case due to the lack of benefits for temporary oil field workers.
+      </p>
+
+      <p>
+        This index does not give me clear answers about why exactly areas of the state have a higher average rate of disability or poverty status; instead, it painted a clear picture of where these trends exist, serving as a tool to learn more.
+      </p>
+
+      <h3>Conclusion</h3>
+
+      <p>
+        Through the creation of my North Dakota Disability Disparity Index, I learned how to process and prepare census data within ArcGIS Pro. More importantly however, I discovered how ArcGIS Online can be used to create an interactive and accessible web tool. I am interested to learn more about the intersection between ArcGIS Online, artificial intelligence, and open source geospatial data.
+      </p>
+
+      <h3>Sources</h3>
+
+      <ul>
+        <li>
+          <a href="https://www.census.gov/topics/health/disability/guidance/data-collection-acs.html"
+             target="_blank" rel="noopener">
+            U.S. Census Bureau: How Disability Data are Collected
+          </a>
+        </li>
+        <li>
+          <a href="https://www.nhgis.org" target="_blank" rel="noopener">
+            NHGIS: 2020–2024 ACS 5-Year Estimates
+          </a>
+        </li>
+      </ul>
+
+      <p><b>ACS Data Tables:</b></p>
+
+      <ul>
+        <li><b>B27010:</b> Types of Health Insurance Coverage by Age</li>
+        <li><b>B21001:</b> Sex by Age by Veteran Status</li>
+        <li><b>B17001:</b> Poverty Status in the Past 12 Months</li>
+        <li><b>B18104:</b> Sex by Age by Cognitive Difficulty</li>
+        <li><b>B18105:</b> Sex by Age by Ambulatory Difficulty</li>
+        <li><b>B18106:</b> Sex by Age by Self-Care Difficulty</li>
+        <li><b>B18102:</b> Sex by Age by Hearing Difficulty</li>
+        <li><b>B18103:</b> Sex by Age by Vision Difficulty</li>
+        <li><b>B18107:</b> Sex by Age by Independent Living Difficulty</li>
+      </ul>
+
+    </details>
+
+    <div id="controls"></div>
+
+  </div>
+
+  <div id="view"></div>
+
+</div>
+
+<script>
+
+const API_KEY = "AAPTaVtqvyraqQD5buCPlbhodwA..SkVSs01i53siRj7h8n1f1CUAUFVaZe-VV5Vmgmgdue9jMqXyDRQCLhyU32naXCoxf4zUn1hy9FOSalV7aVyxPIfT5A_PPZDP1VajffiVTh70c3elNEmn_QwFzgaI-QLnBNGet5SabbecVhn4x2UXalzhgQrAige8a6r6Xz36-xcpFQI0BS8ywx2guShdGUuZcmmxATlPSnWAtiQprl1K2lggngep5X7thS1Zf9xmsioBhrXZBoC_xlJyAT1_Csqet7WD";
+
+const LAYER_URL =
+"https://services6.arcgis.com/92HO0J5O9FPqRx5K/arcgis/rest/services/GEOG474_Final_Project/FeatureServer";
+
+const VARIABLES = [
+  {
+    field: "B27010PERP",
+    label: "Percent of population without health care coverage"
+  },
+  {
+    field: "B21001PERP",
+    label: "Percent of population with veteran status"
+  },
+  {
+    field: "B17001PERP",
+    label: "Percent of population below poverty level"
+  },
+  {
+    field: "B18104PERP",
+    label: "Percent of population with cognitive difficulty"
+  },
+  {
+    field: "B18105PERP",
+    label: "Percent of population with ambulatory difficulty"
+  },
+  {
+    field: "B18106PERP",
+    label: "Percent of population with self-care difficulty"
+  },
+  {
+    field: "B18102PERP",
+    label: "Percent of population with hearing difficulty"
+  },
+  {
+    field: "B18103PERP",
+    label: "Percent of population with vision difficulty"
+  },
+  {
+    field: "B18107PERP",
+    label: "Percent of population with independent living difficulty"
+  }
+];
+
+require([
+  "esri/config",
+  "esri/Map",
+  "esri/views/MapView",
+  "esri/layers/FeatureLayer",
+  "esri/widgets/Legend"
+], function(esriConfig, Map, MapView, FeatureLayer, Legend) {
+
+  esriConfig.apiKey = API_KEY;
+
+  const layer = new FeatureLayer({
+    url: LAYER_URL,
+    outFields: ["*"],
+    opacity: 0.9,
+    popupEnabled: true,
+
+    popupTemplate: {
+      title: "Disability Vulnerability Statistics",
+
+      content: function(feature) {
+
+        const a = feature.graphic.attributes;
+
+        
+        const score = calculateScore(a);
+
+        let html = `
+          <div style="font-family: Arial, sans-serif;">
+
+            <div style="
+              padding:12px;
+              margin-bottom:12px;
+              background:#f3f3f3;
+              border-radius:6px;
+              text-align:center;
+            ">
+
+              <div style="font-size:12px;color:#555;">
+                Overall Disparity Score
+              </div>
+
+              <div style="
+                font-size:28px;
+                font-weight:bold;
+                color:#bd0026;
+                margin:5px 0;
+              ">
+                ${score === null ? "N/A" : score.toFixed(1)}
+              </div>
+
+              <div style="font-size:10px;color:#777;">
+                Relative score (0–100)
+              </div>
+
+            </div>
+
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        `;
+
+        VARIABLES.forEach(variable => {
+
+          const rawValue = a[variable.field];
+          const value = Number(rawValue);
+
+          const percentage =
+            rawValue !== null &&
+            rawValue !== undefined &&
+            rawValue !== "" &&
+            Number.isFinite(value)
+              ? (value * 100).toFixed(2) + "%"
+              : "Not available";
+
+          html += `
+            <tr>
+              <td style="padding:8px 4px;border-bottom:1px solid #ddd;">
+                ${variable.label}
+              </td>
+
+              <td style="
+                padding:8px 4px;
+                text-align:right;
+                font-weight:bold;
+                border-bottom:1px solid #ddd;
+                white-space:nowrap;
+              ">
+                ${percentage}
+              </td>
+            </tr>
+          `;
+        });
+
+        html += `
+            </table>
+
+            <p style="font-size:10px;color:#777;margin-top:10px;">
+              Source: 2020–2024 ACS 5-Year Estimates
+            </p>
+
+          </div>
+        `;
+
+        return html;
+      }
+    }
+  });
+
+  const map = new Map({
+    basemap: "arcgis/light-gray",
+    layers: [layer]
+  });
+
+  const view = new MapView({
+    container: "view",
+    map: map,
+    extent: {
+      xmin: -104.2,
+      ymin: 45.8,
+      xmax: -96.4,
+      ymax: 49.2,
+      spatialReference: {
+        wkid: 4326
+      }
+    }
+  });
+
+  view.ui.add(new Legend({
+    view: view
+  }), "bottom-right");
+
+  const ranges = {};
+  const weights = {};
+
+  VARIABLES.forEach(v => {
+    weights[v.field] = 5;
+  });
+
+  function calculateScore(attributes) {
+
+    let s = 0;
+    let w = 0;
+
+    VARIABLES.forEach(variable => {
+
+      const weight = weights[variable.field];
+      const rawValue = attributes[variable.field];
+      const value = Number(rawValue);
+
+      if (
+        weight <= 0 ||
+        rawValue === null ||
+        rawValue === undefined ||
+        rawValue === "" ||
+        !Number.isFinite(value)
+      ) {
+        return;
+      }
+
+      const range = ranges[variable.field];
+
+      if (!range) return;
+
+      const span = (range.max - range.min) || 1;
+
+      const normalized =
+        (value - range.min) / span;
+
+      s += normalized * weight;
+      w += weight;
+
+    });
+
+    if (w === 0) return null;
+
+    return (s / w) * 100;
+  }
+
+  function buildExpression() {
+
+    const active = VARIABLES.filter(
+      v => weights[v.field] > 0
+    );
+
+    if (!active.length) return "return null;";
+
+    let expression =
+      "var s = 0; var w = 0; var v = 0; var n = 0;\n";
+
+    active.forEach(variable => {
+
+      const weight = weights[variable.field];
+
+      const range = ranges[variable.field] || {
+        min: 0,
+        max: 1
+      };
+
+      const span = (range.max - range.min) || 1;
+
+      expression +=
+        `v = $feature["${variable.field}"];\n`;
+
+      expression +=
+        `if (!IsEmpty(v)) {
+          n = (v - ${range.min}) / ${span};
+          s += n * ${weight};
+          w += ${weight};
+        }\n`;
+    });
+
+    expression += "if (w == 0) { return null; }\n";
+    expression += "return (s / w) * 100;";
+
+    return expression;
+  }
+
+  function updateRenderer() {
+
+    layer.renderer = {
+      type: "simple",
+
+      symbol: {
+        type: "simple-fill",
+        outline: {
+          color: [120, 120, 120, 0.6],
+          width: 0.4
+        }
+      },
+
+      visualVariables: [{
+        type: "color",
+        valueExpression: buildExpression(),
+        valueExpressionTitle: "Overall Disparity Score (0-100)",
+
+        stops: [
+          {
+            value: 0,
+            color: "#ffffb2",
+            label: "Lower relative disparities"
+          },
+          {
+            value: 25,
+            color: "#fecc5c"
+          },
+          {
+            value: 50,
+            color: "#fd8d3c"
+          },
+          {
+            value: 75,
+            color: "#f03b20"
+          },
+          {
+            value: 100,
+            color: "#bd0026",
+            label: "Higher relative disparities"
+          }
+        ]
+      }]
+    };
+  }
+
+  const controls = document.getElementById("controls");
+
+  VARIABLES.forEach(variable => {
+
+    const d = document.createElement("div");
+
+    d.className = "var";
+
+    d.innerHTML = `
+      <div class="name">${variable.label}</div>
+
+      <div class="row">
+        <span>Weight</span>
+
+        <input type="range"
+          min="0"
+          max="10"
+          step="1"
+          value="${weights[variable.field]}">
+
+        <span class="w">${weights[variable.field]}</span>
+      </div>
+    `;
+
+    const slider = d.querySelector('input[type="range"]');
+    const output = d.querySelector(".w");
+
+    slider.oninput = () => {
+
+      weights[variable.field] = Number(slider.value);
+      output.textContent = slider.value;
+
+      updateRenderer();
+
+      if (
+        view.popup.visible &&
+        view.popup.selectedFeature
+      ) {
+
+        const selectedFeature = view.popup.selectedFeature;
+        const location = view.popup.location;
+
+        view.popup.open({
+          features: [selectedFeature],
+          location: location
+        });
+      }
+    };
+
+    controls.appendChild(d);
+
+  });
+
+  layer.load().then(() => {
+
+    const stats = [];
+
+    VARIABLES.forEach(variable => {
+
+      ["min", "max"].forEach(type => {
+
+        stats.push({
+          statisticType: type,
+          onStatisticField: variable.field,
+          outStatisticFieldName: variable.field + "_" + type
+        });
+
+      });
+
+    });
+
+    return layer.queryFeatures({
+      outStatistics: stats,
+      returnGeometry: false
+    });
+
+  }).then(result => {
+
+    const attributes = result.features[0].attributes;
+
+    VARIABLES.forEach(variable => {
+
+      const min = Number(
+        attributes[variable.field + "_min"]
+      );
+
+      const max = Number(
+        attributes[variable.field + "_max"]
+      );
+
+      ranges[variable.field] = {
+        min,
+        max
+      };
+
+    });
+
+    updateRenderer();
+
+  }).catch(error => {
+    console.error("Unable to calculate vulnerability ranges:", error);
+  });
+
+});
+
+</script>
+
+</body>
+</html>
